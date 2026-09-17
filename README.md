@@ -175,6 +175,11 @@ This is a special message signed by two keys:
 1. signature of the message itself (current key)
 2. a special "proof" signed by a new private key
 
+The request also carries `encryptedPrevPrivateKey`: the previous private key encrypted by the client with the new key.
+It is stored in a separate cell so the signed request fits within one cell.
+On a successful rotation, the wallet emits a `RotationEvent` external log with this value,
+allowing the client to decrypt older messages using the new key.
+
 For exact fields and proof format, dive into WalletTg sources.
 Grep `ChangePublicKeyRequest` and `KeyRotationProofPayload`.
 

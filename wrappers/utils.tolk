@@ -125,11 +125,13 @@ fun prepareChangePublicKeyWithProofI(
     header: SeqnoHeader,
     newPublicKey: uint256,
     rotationSignature: bits512,
+    encryptedPrevPrivateKey: EncryptedPrivateKey = 0,
 ): SignedRequest<AllowedInternalMsg> {
     val request = ChangePublicKeyRequestI {
         header,
         newPublicKey,
         rotationSignature: rotationSignature.toCell(),
+        encryptedPrevPrivateKey: encryptedPrevPrivateKey.toCell(),
     };
     val signature = crypto.sign(currentKey.privateKey, request.toCell()) as bits512;
     return { signature, request };
@@ -140,11 +142,13 @@ fun prepareChangePublicKeyI(
     header: SeqnoHeader,
     walletAddress: address,
     newKey: KeyPair,
+    encryptedPrevPrivateKey: EncryptedPrivateKey = 0,
 ): SignedRequest<AllowedInternalMsg> {
     val request = ChangePublicKeyRequestI {
         header,
         newPublicKey: newKey.publicKey,
         rotationSignature: createKeyRotationProof(walletAddress, newKey).toCell(),
+        encryptedPrevPrivateKey: encryptedPrevPrivateKey.toCell(),
     };
     val signature = crypto.sign(currentKey.privateKey, request.toCell()) as bits512;
     return { signature, request };
@@ -155,11 +159,13 @@ fun prepareChangePublicKeyWithProofE(
     header: SeqnoHeader,
     newPublicKey: uint256,
     rotationSignature: bits512,
+    encryptedPrevPrivateKey: EncryptedPrivateKey = 0,
 ): SignedRequest<AllowedExternalMsg> {
     val request = ChangePublicKeyRequestE {
         header,
         newPublicKey,
         rotationSignature: rotationSignature.toCell(),
+        encryptedPrevPrivateKey: encryptedPrevPrivateKey.toCell(),
     };
     val signature = crypto.sign(currentKey.privateKey, request.toCell()) as bits512;
     return { signature, request };
@@ -170,11 +176,13 @@ fun prepareChangePublicKeyE(
     header: SeqnoHeader,
     walletAddress: address,
     newKey: KeyPair,
+    encryptedPrevPrivateKey: EncryptedPrivateKey = 0,
 ): SignedRequest<AllowedExternalMsg> {
     val request = ChangePublicKeyRequestE {
         header,
         newPublicKey: newKey.publicKey,
         rotationSignature: createKeyRotationProof(walletAddress, newKey).toCell(),
+        encryptedPrevPrivateKey: encryptedPrevPrivateKey.toCell(),
     };
     val signature = crypto.sign(currentKey.privateKey, request.toCell()) as bits512;
     return { signature, request };

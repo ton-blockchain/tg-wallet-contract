@@ -14,6 +14,8 @@ contract WalletTg {
     storage: Storage
     incomingMessages: SignedRequest<AllowedInternalMsg>
     incomingExternal: SignedRequest<AllowedExternalMsg>
+    thrownErrors: Errors
+    emittedEvents: RotationEvent
 }
 
 type AllowedInternalMsg =
@@ -89,10 +91,15 @@ fun onInternalMessage(in: InMessage) {
 
             assert (storage.publicKey != msg.newPublicKey) throw Errors.NewKeyMustDiffer;
             assert (checkRotationProof(msg.rotationSignature, msg.newPublicKey)) throw Errors.NewKeySignatureIsInvalid;
+            val encryptedPrevPrivateKey = msg.encryptedPrevPrivateKey.load();
 
             storage.seqno += 1;
             storage.publicKey = msg.newPublicKey;
             storage.save();
+
+            RotationEvent {
+                encryptedPrevPrivateKey,
+            }.send();
         }
 
         else => {
@@ -145,11 +152,16 @@ fun onExternalMessage(inMsgBody: slice) {
 
             assert (storage.publicKey != msg.newPublicKey) throw Errors.NewKeyMustDiffer;
             assert (checkRotationProof(msg.rotationSignature, msg.newPublicKey)) throw Errors.NewKeySignatureIsInvalid;
+            val encryptedPrevPrivateKey = msg.encryptedPrevPrivateKey.load();
             acceptExternalMessage();
 
             storage.seqno += 1;
             storage.publicKey = msg.newPublicKey;
             storage.save();
+
+            RotationEvent {
+                encryptedPrevPrivateKey,
+            }.send();
         }
 
         else => {

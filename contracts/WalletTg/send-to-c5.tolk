@@ -2,6 +2,15 @@ import "errors"
 import "messages"
 
 
+/// Emit the encrypted previous private key as an external log for the wallet client.
+fun RotationEvent.send(self) {
+    val msg = createExternalLogMessage({
+        dest: createAddressNone(),
+        body: self,
+    });
+    msg.send(SEND_MODE_REGULAR);
+}
+
 /// Every client-provided message is sent via `sendRawMessage`, which appends an out action to c5.
 fun MessageToSend.validateAndSend(self, isExternal: bool) {
     if (isExternal) {

@@ -1,9 +1,11 @@
 import "@acton/crypto"
 import "@acton/emulation/network"
 import "@acton/testing/expect"
+import "@acton/types/message"
 import "@wrappers/WalletTrampoline.gen"
 import "@wrappers/utils"
 import "@contracts/WalletTg/errors"
+import "@contracts/WalletTg/messages"
 
 /*
     This file checks public key rotation: external/internal success paths,
@@ -307,4 +309,28 @@ get fun `test change-key: a proof made for one wallet is rejected by another`() 
     expect(forA.unwrap()).toHaveTx({ exitCode: 0 });
     expect(walletA.getPublicKey()).toEqual(newKey.publicKey);
     expect(walletA.seqno()).toEqual(1);
+}
+
+get fun `test change-key: external rotation logs the encrypted previous key`() {
+    val oldKey = crypto.generateKeyPair();
+    val newKey = crypto.generateKeyPair();
+    val (wallet, _) = deployWalletWithKey(oldKey);
+    val req = prepareChangePublicKeyE(oldKey, seqnoHeader(0), wallet.address, newKey, 0x1234);
+
+    val result = wallet.requestExternal(req);
+    expect(result).toBeAccepted();
+    val event = result.findExternalOutMessage<RotationEvent>()!;
+    expect(event.loadBody().encryptedPrevPrivateKey).toEqual(0x1234);
+}
+
+get fun `test change-key: internal rotation logs the encrypted previous key`() {
+    val oldKey = crypto.generateKeyPair();
+    val newKey = crypto.generateKeyPair();
+    val (wallet, deployer) = deployWalletWithKey(oldKey);
+    val req = prepareChangePublicKeyI(oldKey, seqnoHeader(0), wallet.address, newKey, 0x1234);
+
+    val result = wallet.requestInternal(deployer.address, req, { value: ton("0.1") });
+    expect(result).toHaveSuccessfulTx({ to: wallet.address });
+    val event = result.findExternalOutMessage<RotationEvent>()!;
+    expect(event.loadBody().encryptedPrevPrivateKey).toEqual(0x1234);
 }

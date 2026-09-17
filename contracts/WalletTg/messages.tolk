@@ -10,6 +10,10 @@ struct MessageToSend {
 /// The contract parses it manually as a raw slice to avoid materializing the array.
 type RawArrayOfMessagesToSend = RemainingBitsAndRefs
 
+/// Previous private key encrypted by the client: prevPrivateKey XOR sha256(newPrivateKey ++ "old-key-encryption").
+/// The contract copies this value to `RotationEvent` without decrypting it.
+type EncryptedPrivateKey = uint256
+
 /// A payload signed by a new private key for the "change key" request.
 struct KeyRotationProofPayload {
     private tag: uint96 = 0x4B45595F524F544154494F4E
@@ -98,6 +102,8 @@ struct (0xFBBA99C7) ChangePublicKeyRequestI {
     /// First, by the current key (SignedRequest, the incoming message itself).
     /// Second, by the new key (rotation proof).
     rotationSignature: Cell<bits512>
+    /// Previous private key encrypted by the new key, so the client can decrypt older messages.
+    encryptedPrevPrivateKey: Cell<EncryptedPrivateKey>
 }
 
 /// Change the wallet signing key.
@@ -112,4 +118,12 @@ struct (0xFBBA99C8) ChangePublicKeyRequestE {
     /// First, by the current key (SignedRequest, the incoming message itself).
     /// Second, by the new key (rotation proof).
     rotationSignature: Cell<bits512>
+    /// Previous private key encrypted by the new key, so the client can decrypt older messages.
+    encryptedPrevPrivateKey: Cell<EncryptedPrivateKey>
+}
+
+/// External log emitted on a successful key rotation.
+/// Carries the previous private key encrypted by the new key, so the client can decrypt older messages.
+struct (0x5D1CD02F) RotationEvent {
+    encryptedPrevPrivateKey: EncryptedPrivateKey
 }
